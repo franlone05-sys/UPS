@@ -1,120 +1,197 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>UPS Interactive Guide</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
+<meta charset="UTF-8">
+<title>UPS Control Assistant</title>
 
-    .card {
-      background: #1e293b;
-      border-radius: 15px;
-      padding: 25px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    }
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0b1220;
+  color: #e2e8f0;
+  margin: 0;
+}
 
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 16px;
-    }
+header {
+  background: #020617;
+  padding: 15px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: bold;
+  border-bottom: 2px solid #1e293b;
+}
 
-    .next { background: #22c55e; color: white; }
-    .prev { background: #ef4444; color: white; }
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
 
-    .progress {
-      margin-top: 15px;
-      font-size: 14px;
-      opacity: 0.7;
-    }
+.card {
+  background: #111827;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
 
-    select {
-      padding: 10px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-    }
-  </style>
+.step {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin: 5px;
+  font-size: 15px;
+}
+
+.next { background: #22c55e; }
+.prev { background: #ef4444; }
+.check { background: #3b82f6; }
+
+.progress-bar {
+  width: 100%;
+  background: #1e293b;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 15px;
+}
+
+.progress {
+  height: 10px;
+  background: #22c55e;
+  width: 0%;
+}
+
+.status {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #1e293b;
+}
+
+.warning {
+  color: #facc15;
+  margin-top: 10px;
+}
+
+select {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.done {
+  text-decoration: line-through;
+  color: #22c55e;
+}
+</style>
+
 </head>
 <body>
 
-<h1>⚡ UPS Interactive Guide</h1>
+<header>⚡ UPS Control Assistant PRO</header>
 
-<select id="mode" onchange="changeMode()">
-  <option value="off">Apagado UPS</option>
-  <option value="on">Encendido UPS</option>
-</select>
+<div class="container">
+  <select id="mode" onchange="changeMode()">
+    <option value="off">Apagado UPS</option>
+    <option value="on">Encendido UPS</option>
+  </select>
 
-<div class="card">
-  <h2 id="stepTitle"></h2>
-  <p id="stepText"></p>
+  <div class="card">
+    <div class="step" id="stepText"></div>
 
-  <button class="prev" onclick="prevStep()">⬅ Anterior</button>
-  <button class="next" onclick="nextStep()">Siguiente ➡</button>
+    <button class="check" onclick="markDone()">✔ Completar paso</button>
+    <br>
+    <button class="prev" onclick="prevStep()">⬅ Anterior</button>
+    <button class="next" onclick="nextStep()">Siguiente ➡</button>
 
-  <div class="progress" id="progress"></div>
+    <div class="progress-bar">
+      <div class="progress" id="progressBar"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="warning" id="warning"></div>
+  </div>
 </div>
 
 <script>
 let stepsOff = [
-"Login: Control (admin – admin)",
-"Entrar a Guided Sequences",
-"Seleccionar Shut down UPS System",
-"Cerrar breaker MBB (subir)",
-"Abrir breaker UOB (bajar)",
-"Turn inverter off",
-"Abrir battery breaker(s)",
-"Abrir breaker UIB",
-"UPS se apaga sin botar carga",
-"Esperar 5 minutos",
-"Quitar bypass (IMB OFF)"
+{text:"Login: Control (admin – admin)", warn:"Verificar acceso autorizado"},
+{text:"Entrar a Guided Sequences"},
+{text:"Shut down UPS System"},
+{text:"Cerrar breaker MBB (subir)", warn:"Confirmar bypass activo"},
+{text:"Abrir breaker UOB (bajar)"},
+{text:"Turn inverter OFF"},
+{text:"Abrir battery breaker(s)", warn:"CUIDADO: pérdida de respaldo"},
+{text:"Abrir breaker UIB"},
+{text:"UPS apagado sin botar carga"},
+{text:"Esperar 5 minutos"},
+{text:"Quitar bypass (IMB OFF)"}
 ];
 
 let stepsOn = [
-"Cerrar UIB (subir)",
-"Esperar carga del sistema (5 min)",
-"Login: Control (admin – admin)",
-"Entrar a Guided Sequences",
-"Start up UPS system",
-"Cerrar battery breaker(s)",
-"Transfer to static bypass",
-"Cerrar breaker UOB",
-"Abrir breaker MBB",
-"Turn inverter ON",
-"Confirmar modo normal"
+{text:"Cerrar UIB"},
+{text:"Esperar carga del sistema (5 min)"},
+{text:"Login: Control"},
+{text:"Guided Sequences"},
+{text:"Start up UPS system"},
+{text:"Cerrar battery breaker(s)"},
+{text:"Transfer to static bypass", warn:"Verificar estabilidad"},
+{text:"Cerrar breaker UOB"},
+{text:"Abrir breaker MBB"},
+{text:"Turn inverter ON"},
+{text:"Verificar modo NORMAL"}
 ];
 
 let currentSteps = stepsOff;
 let currentStep = 0;
+let completed = [];
 
-function updateStep() {
-  document.getElementById("stepTitle").innerText = "Paso " + (currentStep + 1);
-  document.getElementById("stepText").innerText = currentSteps[currentStep];
-  document.getElementById("progress").innerText =
-    (currentStep + 1) + " / " + currentSteps.length;
+function updateUI() {
+  let step = currentSteps[currentStep];
+
+  document.getElementById("stepText").innerText = step.text;
+  document.getElementById("warning").innerText = step.warn || "";
+
+  let percent = ((currentStep) / currentSteps.length) * 100;
+  document.getElementById("progressBar").style.width = percent + "%";
+
+  document.getElementById("status").innerText =
+    "Paso " + (currentStep + 1) + " de " + currentSteps.length;
+
+  if (completed[currentStep]) {
+    document.getElementById("stepText").classList.add("done");
+  } else {
+    document.getElementById("stepText").classList.remove("done");
+  }
+}
+
+function markDone() {
+  completed[currentStep] = true;
+  updateUI();
 }
 
 function nextStep() {
+  if (!completed[currentStep]) {
+    alert("Debes completar el paso antes de avanzar");
+    return;
+  }
+
   if (currentStep < currentSteps.length - 1) {
     currentStep++;
-    updateStep();
+    updateUI();
   }
 }
 
 function prevStep() {
   if (currentStep > 0) {
     currentStep--;
-    updateStep();
+    updateUI();
   }
 }
 
@@ -122,10 +199,11 @@ function changeMode() {
   let mode = document.getElementById("mode").value;
   currentSteps = mode === "off" ? stepsOff : stepsOn;
   currentStep = 0;
-  updateStep();
+  completed = [];
+  updateUI();
 }
 
-updateStep();
+updateUI();
 </script>
 
 </body>
