@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>UPS Interactive Guide</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 15px;
+      padding: 25px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .next { background: #22c55e; color: white; }
+    .prev { background: #ef4444; color: white; }
+
+    .progress {
+      margin-top: 15px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    select {
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>⚡ UPS Interactive Guide</h1>
+
+<select id="mode" onchange="changeMode()">
+  <option value="off">Apagado UPS</option>
+  <option value="on">Encendido UPS</option>
+</select>
+
+<div class="card">
+  <h2 id="stepTitle"></h2>
+  <p id="stepText"></p>
+
+  <button class="prev" onclick="prevStep()">⬅ Anterior</button>
+  <button class="next" onclick="nextStep()">Siguiente ➡</button>
+
+  <div class="progress" id="progress"></div>
+</div>
+
+<script>
+let stepsOff = [
+"Login: Control (admin – admin)",
+"Entrar a Guided Sequences",
+"Seleccionar Shut down UPS System",
+"Cerrar breaker MBB (subir)",
+"Abrir breaker UOB (bajar)",
+"Turn inverter off",
+"Abrir battery breaker(s)",
+"Abrir breaker UIB",
+"UPS se apaga sin botar carga",
+"Esperar 5 minutos",
+"Quitar bypass (IMB OFF)"
+];
+
+let stepsOn = [
+"Cerrar UIB (subir)",
+"Esperar carga del sistema (5 min)",
+"Login: Control (admin – admin)",
+"Entrar a Guided Sequences",
+"Start up UPS system",
+"Cerrar battery breaker(s)",
+"Transfer to static bypass",
+"Cerrar breaker UOB",
+"Abrir breaker MBB",
+"Turn inverter ON",
+"Confirmar modo normal"
+];
+
+let currentSteps = stepsOff;
+let currentStep = 0;
+
+function updateStep() {
+  document.getElementById("stepTitle").innerText = "Paso " + (currentStep + 1);
+  document.getElementById("stepText").innerText = currentSteps[currentStep];
+  document.getElementById("progress").innerText =
+    (currentStep + 1) + " / " + currentSteps.length;
+}
+
+function nextStep() {
+  if (currentStep < currentSteps.length - 1) {
+    currentStep++;
+    updateStep();
+  }
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    currentStep--;
+    updateStep();
+  }
+}
+
+function changeMode() {
+  let mode = document.getElementById("mode").value;
+  currentSteps = mode === "off" ? stepsOff : stepsOn;
+  currentStep = 0;
+  updateStep();
+}
+
+updateStep();
+</script>
+
+</body>
+</html>
